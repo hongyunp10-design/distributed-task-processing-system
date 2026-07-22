@@ -1,0 +1,22 @@
+# Maven
+target/
+
+# IntelliJ
+.idea/
+*.iml
+
+# macOS
+.DS_Store
+
+# Logs
+*.log
+
+# Local configs
+application-local.yml
+application-local.properties
+
+# Environment
+.env
+
+CallingChain.txt
+ProjectReview.txt

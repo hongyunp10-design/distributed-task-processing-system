@@ -60,6 +60,12 @@ public class TaskStateService {
                     fromStatus,
                     targetStatus
             );
+        }else if (targetStatus == TaskStatus.DEAD) {
+            updateRows = taskMapper.updateTaskStateStatusAndCompletedAtIfCurrentStatus(
+                    taskId,
+                    fromStatus,
+                    targetStatus
+            );
         }else {
             updateRows = taskMapper.updateTaskStatusIfCurrentStatus(
                     taskId,
@@ -77,12 +83,6 @@ public class TaskStateService {
         }
 
 
-        task.setStatus(targetStatus);
-
-        if (targetStatus == TaskStatus.SUCCESS) {
-            task.setLastErrorMessage(null);
-        }
-
         insertTaskStateAudit(
                 taskId,
                 fromStatus,
@@ -92,17 +92,20 @@ public class TaskStateService {
                 task.getMaxRetryCount()
         );
 
+        Task updatedTask = taskMapper.selectTaskById(taskId);
+
         log.info(
-                "Task state transition completed: taskId={}, fromStatus={}, toStatus={}, retryCount={}, maxRetryCount={}, actor={}, reason={}",
+                "Task state transition completed: taskId={}, fromStatus={}, toStatus={}, retryCount={}, maxRetryCount={}, completedAt={}, actor={}, reason={}",
                 taskId,
                 fromStatus,
                 targetStatus,
-                task.getRetryCount(),
-                task.getMaxRetryCount(),
+                updatedTask.getRetryCount(),
+                updatedTask.getMaxRetryCount(),
+                updatedTask.getCompletedAt(),
                 context.getActor(),
                 context.getReason()
         );
-        return task;
+        return updatedTask;
     }
 
     @Transactional

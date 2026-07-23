@@ -74,4 +74,10 @@ public interface TaskMapper {
             @Param("id") Long id,
             @Param("offsetSeconds") long offsetSeconds
     );
+
+    int updateTaskStateStatusAndCompletedAtIfCurrentStatus(
+            @Param("id") Long id,
+            @Param("fromStatus") TaskStatus fromStatus,
+            @Param("toStatus") TaskStatus toStatus
+    );
 }

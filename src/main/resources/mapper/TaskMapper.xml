@@ -16,6 +16,7 @@
         <result property="createdAt" column="created_at"/>
         <result property="updatedAt" column="updated_at"/>
         <result property="startedAt" column="started_at"/>
+        <result property="completedAt" column="completed_at"/>
     </resultMap>
 
     <insert id="insertTask" parameterType="Task" useGeneratedKeys="true" keyProperty="id">
@@ -48,7 +49,8 @@
             last_error_message,
             created_at,
             updated_at,
-            started_at
+            started_at,
+            completed_at
         FROM task
         WHERE id = #{id}
     </select>
@@ -64,7 +66,8 @@
             last_error_message,
             created_at,
             updated_at,
-            started_at
+            started_at,
+            completed_at
         FROM task
         ORDER BY id
     </select>
@@ -95,7 +98,8 @@
             last_error_message,
             created_at,
             updated_at,
-            started_at
+            started_at,
+            completed_at
         FROM task
         WHERE status = 'FAILED'
         ORDER BY id
@@ -112,7 +116,8 @@
             last_error_message,
             created_at,
             updated_at,
-            started_at
+            started_at,
+            completed_at
         FROM task
         WHERE status = 'PENDING'
         ORDER BY id
@@ -150,6 +155,7 @@
         UPDATE task
         SET
             status = #{toStatus},
+            completed_at = CURRENT_TIMESTAMP(3),
             last_error_message = NULL
         WHERE id = #{id}
             AND status = #{fromStatus}
@@ -182,7 +188,8 @@
             last_error_message,
             created_at,
             updated_at,
-            started_at
+            started_at,
+            completed_at
         FROM task
         WHERE status = 'RUNNING'
           AND started_at IS NOT NULL
@@ -200,5 +207,14 @@
         UPDATE task
         SET started_at = TIMESTAMPADD(SECOND, #{offsetSeconds}, CURRENT_TIMESTAMP)
         WHERE id = #{id}
+    </update>
+
+    <update id="updateTaskStateStatusAndCompletedAtIfCurrentStatus">
+        UPDATE task
+        SET
+            status = #{toStatus},
+            completed_at = CURRENT_TIMESTAMP(3)
+        WHERE id = #{id}
+          AND status = #{fromStatus}
     </update>
 </mapper>

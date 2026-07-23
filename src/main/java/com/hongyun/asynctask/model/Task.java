@@ -18,6 +18,7 @@ public class Task implements Serializable {
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
     private LocalDateTime startedAt;
+    private LocalDateTime completedAt;
 
     public Task() {
     }
@@ -150,4 +151,11 @@ public class Task implements Serializable {
         this.startedAt = startedAt;
     }
 
+    public LocalDateTime getCompletedAt() {
+        return completedAt;
+    }
+
+    public void setCompletedAt(LocalDateTime completedAt) {
+        this.completedAt = completedAt;
+    }
 }

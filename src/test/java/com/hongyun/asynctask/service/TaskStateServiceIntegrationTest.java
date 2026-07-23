@@ -112,6 +112,47 @@ class TaskStateServiceIntegrationTest{
     }
 
     @Test
+    void transitionTaskStatus_shouldRollBackCompletedAt_whenAuditInsertFails() {
+        Task task = insertTask(
+                "state-service-completed-at-rollback-test-task",
+                TaskType.MEDIA,
+                TaskStatus.RUNNING,
+                0,
+                2
+        );
+
+        Mockito.doThrow(new RuntimeException("Simulated audit insert failure"))
+                .when(taskStateAuditMapper)
+                .insertTaskStateAudit(Mockito.any(TaskStateAudit.class));
+
+        assertThatThrownBy(() ->
+                taskStateService.transitionTaskStatus(
+                        task.getId(),
+                        TaskStatus.SUCCESS,
+                        TaskStateChangeContext.of(
+                                TaskStateActor.WORKER,
+                                TaskStateChangeReason.WORKER_EXECUTION_SUCCEEDED
+                        )
+                )
+        ).isInstanceOf(RuntimeException.class)
+                .hasMessageContaining("Simulated audit insert failure");
+
+        Task taskInDb = taskMapper.selectTaskById(task.getId());
+
+        assertThat(taskInDb.getStatus()).isEqualTo(TaskStatus.RUNNING);
+        assertThat(taskInDb.getCompletedAt()).isNull();
+
+        List<TaskStateAudit> audits =
+                taskStateAuditMapper.selectTaskStateAuditsByTaskId(
+                        task.getId(),
+                        null,
+                        null
+                );
+
+        assertThat(audits).isEmpty();
+    }
+
+    @Test
     void claimTask_shouldTransitionPendingTaskToRunningAndInsertAudit() {
         Task task = insertTask(
                 "state-service-claim-test-task",
@@ -171,11 +212,13 @@ class TaskStateServiceIntegrationTest{
         );
 
         assertThat(updatedTask.getStatus()).isEqualTo(TaskStatus.FAILED);
+        assertThat(updatedTask.getCompletedAt()).isNull();
         assertThat(updatedTask.getLastErrorMessage()).isEqualTo("Simulated execution failure");
 
         Task taskInDb = taskMapper.selectTaskById(task.getId());
 
         assertThat(taskInDb.getStatus()).isEqualTo(TaskStatus.FAILED);
+        assertThat(taskInDb.getCompletedAt()).isNull();
         assertThat(taskInDb.getLastErrorMessage()).isEqualTo("Simulated execution failure");
 
         List<TaskStateAudit> audits = taskStateAuditMapper.selectTaskStateAuditsByTaskId(
@@ -243,12 +286,14 @@ class TaskStateServiceIntegrationTest{
 
         assertThat(updatedTask.getStatus()).isEqualTo(TaskStatus.PENDING);
         assertThat(updatedTask.getRetryCount()).isEqualTo(2);
+        assertThat(updatedTask.getCompletedAt()).isNull();
         assertThat(updatedTask.getLastErrorMessage()).isNull();
 
         Task taskInDb = taskMapper.selectTaskById(task.getId());
 
         assertThat(taskInDb.getStatus()).isEqualTo(TaskStatus.PENDING);
         assertThat(taskInDb.getRetryCount()).isEqualTo(2);
+        assertThat(taskInDb.getCompletedAt()).isNull();
         assertThat(taskInDb.getLastErrorMessage()).isNull();
     }
 
@@ -375,6 +420,69 @@ class TaskStateServiceIntegrationTest{
         assertThat(audits.get(0).getActor()).isEqualTo(TaskStateActor.WORKER);
         assertThat(audits.get(0).getReason()).isEqualTo(TaskStateChangeReason.WORKER_PICKED_PENDING_TASK);
     }
+
+
+    @Test
+    void transitionTaskStatus_shouldSetCompletedAt_whenTaskSucceeds() {
+        Task task = insertTask(
+                "state-service-success-completed-at-test-task",
+                TaskType.MEDIA,
+                TaskStatus.RUNNING,
+                0,
+                2
+        );
+
+        Task updatedTask = taskStateService.transitionTaskStatus(
+                task.getId(),
+                TaskStatus.SUCCESS,
+                TaskStateChangeContext.of(
+                        TaskStateActor.WORKER,
+                        TaskStateChangeReason.WORKER_EXECUTION_SUCCEEDED
+                )
+        );
+
+        assertThat(updatedTask.getStatus()).isEqualTo(TaskStatus.SUCCESS);
+        assertThat(updatedTask.getCompletedAt()).isNotNull();
+
+        Task taskInDb = taskMapper.selectTaskById(task.getId());
+
+        assertThat(taskInDb.getStatus()).isEqualTo(TaskStatus.SUCCESS);
+        assertThat(taskInDb.getCompletedAt()).isNotNull();
+    }
+
+    @Test
+    void transitionTaskStatus_shouldSetCompletedAt_whenTaskBecomesDead() {
+        Task task = insertTask(
+                "state-service-dead-completed-at-test-task",
+                TaskType.MEDIA,
+                TaskStatus.FAILED,
+                2,
+                2,
+                "final execution failure"
+        );
+
+        Task updatedTask = taskStateService.transitionTaskStatus(
+                task.getId(),
+                TaskStatus.DEAD,
+                TaskStateChangeContext.of(
+                        TaskStateActor.RETRY_SCHEDULER,
+                        TaskStateChangeReason.RETRY_LIMIT_REACHED
+                )
+        );
+
+        assertThat(updatedTask.getStatus()).isEqualTo(TaskStatus.DEAD);
+        assertThat(updatedTask.getCompletedAt()).isNotNull();
+        assertThat(updatedTask.getLastErrorMessage())
+                .isEqualTo("final execution failure");
+
+        Task taskInDb = taskMapper.selectTaskById(task.getId());
+
+        assertThat(taskInDb.getStatus()).isEqualTo(TaskStatus.DEAD);
+        assertThat(taskInDb.getCompletedAt()).isNotNull();
+        assertThat(taskInDb.getLastErrorMessage())
+                .isEqualTo("final execution failure");
+    }
+
 
     private Task createPendingTask(String name) {
         Task task = new Task(

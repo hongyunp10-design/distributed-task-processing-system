@@ -1,7 +1,5 @@
 package com.hongyun.asynctask.model;
 
-import org.springframework.cglib.core.Local;
-
 import java.io.Serializable;
 import java.time.LocalDateTime;
 

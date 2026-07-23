@@ -81,29 +81,17 @@ Code Review
 # Roadmap
 
 | Milestone | Topic | Status |
-
 |------------|--------|--------|
-
 | Phase 1 | Async Task Processing System | ✅ Completed |
-
-| Milestone 0 | Establish Baseline Metrics | ⏳ Planned |
-
-| Milestone 1 | Concurrency & Atomic Claim | ⏳ Planned |
-
-| Milestone 2 | Worker Failure Recovery | ⏳ Planned |
-
-| Milestone 3 | Retry Strategy | ⏳ Planned |
-
-| Milestone 4 | Idempotency | ⏳ Planned |
-
-| Milestone 5 | Queue Evolution | ⏳ Planned |
-
-| Milestone 6 | Observability | ⏳ Planned |
-
-| Milestone 7 | Scaling | ⏳ Planned |
-
-| Milestone 8 | Cloud Native | ⏳ Planned |
-
+| Milestone 0 | Establish Baseline Metrics | ⏳ Planned |  
+| Milestone 1 | Concurrency & Atomic Claim | ⏳ Planned |  
+| Milestone 2 | Worker Failure Recovery | ⏳ Planned |  
+| Milestone 3 | Retry Strategy | ⏳ Planned |  
+| Milestone 4 | Idempotency | ⏳ Planned |  
+| Milestone 5 | Queue Evolution | ⏳ Planned |  
+| Milestone 6 | Observability | ⏳ Planned |  
+| Milestone 7 | Scaling | ⏳ Planned |  
+| Milestone 8 | Cloud Native | ⏳ Planned |  
 | Milestone 9 | Chaos Testing | ⏳ Planned |
 
 ---
@@ -145,3 +133,7 @@ Every feature should answer:
 - What are the trade-offs?
 
 - How can we verify it works?
+
+Every milestone must leave behind reusable engineering assets, not just working code.
+
+Optimization without measurement is guesswork.

@@ -24,7 +24,7 @@ app:
   task:
     retry-policy:
       default-max-retry-count: 3
-      per-type:
+      pre-type:
         MEDIA: 2
         EMAIL: 5
 
@@ -40,7 +40,7 @@ app:
     execution-async:
       core-pool-size: 2
       max-pool-size: 4
-      queue_capacity: 100
+      queue-capacity: 100
       thread_name-prefix: task-execution-
 
     timeout-scheduler:

@@ -27,7 +27,7 @@ app:
 
     retry-policy:
       default-max-retry-count: 3
-      pre-type:
+      per-type:
         MEDIA: 2
         EMAIL: 5
 

@@ -72,6 +72,8 @@ class TaskControllerBasicApiIntegrationTest {
                 .andExpect(jsonPath("$.data.name").value("api-create-test-task"))
                 .andExpect(jsonPath("$.data.type").value("MEDIA"))
                 .andExpect(jsonPath("$.data.status").value("PENDING"))
+                .andExpect(jsonPath("$.data.createdAt").isNotEmpty())
+                .andExpect(jsonPath("$.data.updatedAt").isNotEmpty())
                 .andExpect(jsonPath("$.data.retryCount").value(0))
                 .andExpect(jsonPath("$.data.maxRetryCount").value(2))
                 .andReturn();

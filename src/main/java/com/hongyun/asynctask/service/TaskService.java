@@ -40,7 +40,7 @@ public class TaskService {
     public Task createTask(String name, TaskType type) {
         Task task = new Task(null, name, type, TaskStatus.PENDING, 0, resolveMaxRetryCount(type));
         taskMapper.insertTask(task);
-        return task;
+        return taskMapper.selectTaskById(task.getId());
     }
 
     @Cacheable(value = "taskCache", key = "#id")

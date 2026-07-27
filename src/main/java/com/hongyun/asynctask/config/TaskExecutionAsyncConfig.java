@@ -20,7 +20,7 @@ public class TaskExecutionAsyncConfig {
 
         executor.setCorePoolSize(properties.getCorePoolSize());
         executor.setMaxPoolSize(properties.getMaxPoolSize());
-        executor.setQueueCapacity(properties.getMaxPoolSize());
+        executor.setQueueCapacity(properties.getQueueCapacity());
         executor.setThreadNamePrefix(properties.getThreadNamePrefix());
 
         executor.setRejectedExecutionHandler(new ThreadPoolExecutor.AbortPolicy());

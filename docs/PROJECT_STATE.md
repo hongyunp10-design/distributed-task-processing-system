@@ -1,8 +1,9 @@
 # Project State
-```markdown
+
 ## Current Milestone
 
 Milestone 0 — Establish Performance Baseline
+
 ## Completed
 
 ### Baseline Runtime Environment
@@ -14,7 +15,26 @@ Milestone 0 — Establish Performance Baseline
 - Retry scheduler disabled for baseline experiments
 - Timeout scheduler disabled for baseline experiments
 - Fixed logging configuration
-```
+
+### Baseline Observability
+
+- Spring Boot Actuator
+- Micrometer runtime metrics
+- Health endpoint
+- Metrics endpoint
+- HTTP server metrics
+- JVM metrics
+- Process and system metrics
+- HikariCP connection-pool metrics
+- Runtime task-executor metrics:
+    - `async.task.executor.active`
+    - `async.task.executor.pool.size`
+    - `async.task.executor.queue.size`
+    - `async.task.executor.queue.remaining`
+    - `async.task.executor.completed`
+
+The custom executor metrics read directly from the runtime
+`ThreadPoolExecutor`, rather than duplicating configured values.
 
 ### Task API
 
@@ -25,6 +45,7 @@ Milestone 0 — Establish Performance Baseline
 - Delete task
 - Request validation
 - Global exception handling
+- POST response returns persisted database-generated timestamps
 
 ### Persistence
 
@@ -59,11 +80,18 @@ Milestone 0 — Establish Performance Baseline
 
 - Flyway Core
 - Flyway MySQL support
-- `V1__initial_schema.sql`
+- Versioned schema migrations
 - Development database rebuilt from migration history
 - Test database rebuilt from migration history
 - `flyway_schema_history` verification
-- ADR-0004: Dedicated Baseline Runtime Profile
+- Standardized timestamp precision
+
+### Architecture Decisions
+
+- ADR-0001: Terminal completion timestamp
+- ADR-0002: Versioned schema management with Flyway
+- ADR-0003: Introduce Redis cache
+- ADR-0004: Dedicated baseline runtime profile
 
 ## Current Database Tables
 
@@ -95,27 +123,40 @@ occur in the same transaction.
 
 Database schema changes
 must be introduced through new Flyway migrations.
+```
 
-Test Status
+## Verification Status
 
-Tests run: 70
-Failures: 0
-Errors: 0
-Skipped: 0
+Baseline observability verification passed:
 
-Known Follow-up
+- /actuator/health returns UP
+- /actuator/metrics exposes framework and custom metrics
+- Executor active count reflects runtime execution
+- Executor queue size decreases while work is processed
+- Executor remaining capacity increases as the queue drains
+- Executor completed count increases as submitted runnables finish
+- HikariCP, JVM, process, system, and HTTP metrics are available
 
-The task creation response currently returns database-generated timestamps as
-null immediately after insertion.
+## Known Follow-up
 
-A subsequent GET returns the persisted created_at and updated_at values.
+Executor metric verification exposed an existing dispatch problem.
 
-This should be handled as a separate behavior-consistency slice rather than
-being mixed into schema management.
+Tasks remain persisted as PENDING after they have been submitted to the
+in-memory executor queue. If execution takes longer than the polling interval,
+a later worker scan can find and submit the same queued tasks again.
 
-Next Candidate Work
+The task-state claim prevents duplicate business execution by rejecting the
+later SUCCESS → RUNNING attempts. However, duplicate runnables consume queue
+capacity, create unnecessary database work, add log noise, and increase the
+executor completed-task count.
 
-* Decide whether POST task should reload the persisted entity.
-* Design query indexes based on actual access patterns.
-* Standardize timestamp types and precision through a new migration.
-* Continue toward task execution and scheduling infrastructure.
+This behavior predates the observability change and will be addressed as a
+separate reliability change after Commit 3.
+
+## Next Candidate Work
+
+- Design a reliable dispatch-claim mechanism
+- Prevent repeated submission of tasks already waiting in the executor queue
+- Define recovery behavior for application restart or failed submission
+- Preserve correct behavior in a future multi-instance deployment
+- Continue baseline workload and performance experiments

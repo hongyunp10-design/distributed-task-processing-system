@@ -1,10 +1,20 @@
 # Project State
-
+```markdown
 ## Current Milestone
 
-Milestone 0.5 — Schema Management
-
+Milestone 0 — Establish Performance Baseline
 ## Completed
+
+### Baseline Runtime Environment
+
+- Dedicated `baseline` Spring profile
+- Isolated baseline MySQL database
+- Isolated Redis logical database
+- Explicit worker and executor configuration
+- Retry scheduler disabled for baseline experiments
+- Timeout scheduler disabled for baseline experiments
+- Fixed logging configuration
+```
 
 ### Task API
 
@@ -53,6 +63,7 @@ Milestone 0.5 — Schema Management
 - Development database rebuilt from migration history
 - Test database rebuilt from migration history
 - `flyway_schema_history` verification
+- ADR-0004: Dedicated Baseline Runtime Profile
 
 ## Current Database Tables
 
